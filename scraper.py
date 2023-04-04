@@ -15,6 +15,16 @@ if response.status_code != requests.codes.ok:
 all_reviews = []
 review_counter = 0
 
+def get_one(dom, sel):
+    return dom.select_one(sel)
+
+def get_stripped_one_checked(dom, sel):
+    el = get_one(dom, sel)
+    return el.text.strip() if el else None
+
+def get_stripped_one(dom, sel):
+    return get_one(dom, sel).text.strip()
+
 while url:
     if not first:
         response = requests.get(url)
@@ -29,8 +39,8 @@ while url:
         exit(1)
 
     for r in reviews:
-        published_date = r.select_one(".user-post__published > time:nth-child(1)")["datetime"].strip()
-        purchased_date = r.select_one(".user-post__published > time:nth-child(2)")
+        published_date = get_one(r, ".user-post__published > time:nth-child(1)")["datetime"].strip()
+        purchased_date = get_one(r, ".user-post__published > time:nth-child(2)")
 
         pros = r.select(".review-feature__col:has(> .review-feature__title--positives) > .review-feature__item")
         pros = [p.text.strip() for p in pros]
@@ -38,20 +48,20 @@ while url:
         cons = r.select(".review-feature__col:has(> .review-feature__title--negatives) > .review-feature__item")
         cons = [c.text.strip() for c in cons]
 
-        recommendation = r.select_one(".user-post__author-recomendation > em")
+        recommendation = get_stripped_one_checked(r, ".user-post__author-recomendation > em")
 
         review = {
             "id": r["data-entry-id"].strip(),
-            "author": r.select_one(".user-post__author-name").text.strip(),
-            "text": r.select_one(".user-post__text").text.strip(),
-            "score": r.select_one(".user-post__score-count").text.strip(),
-            "likes": r.select_one("span[id^=votes-yes]").text.strip(),
-            "dislikes": r.select_one("span[id^=votes-no]").text.strip(),
+            "author": get_stripped_one(r, ".user-post__author-name"),
+            "text": get_stripped_one(r, ".user-post__text"),
+            "score": get_stripped_one(r, ".user-post__score-count"),
+            "likes": get_stripped_one(r, "span[id^=votes-yes]"),
+            "dislikes": get_stripped_one(r, "span[id^=votes-no]"),
             "published_date": published_date,
-            "purchased_date": purchased_date["datetime"].strip() if purchased_date != None else None,
+            "purchased_date": purchased_date["datetime"].strip() if purchased_date else None,
             "pros": pros,
             "cons": cons,
-            "recommendation": recommendation.text.strip() if recommendation != None else None
+            "recommendation": recommendation
         }
 
         all_reviews.append(review)
@@ -60,7 +70,7 @@ while url:
         print(f"Found {review_counter} reviews so far...             \r", end="")
 
     next_page = page_dom.select_one(".pagination__next")
-    url = f"https://ceneo.pl/{next_page['href'].strip()}" if next_page != None else None
+    url = f"https://ceneo.pl/{next_page['href'].strip()}" if next_page else None
 
 if not os.path.exists("reviews"):
     os.mkdir("reviews")
