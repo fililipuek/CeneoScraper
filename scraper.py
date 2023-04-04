@@ -69,7 +69,7 @@ while url:
         review_counter += 1
         print(f"Found {review_counter} reviews so far...             \r", end="")
 
-    next_page = page_dom.select_one(".pagination__next")
+    next_page = get_one(page_dom, ".pagination__next")
     url = f"https://ceneo.pl/{next_page['href'].strip()}" if next_page else None
 
 if not os.path.exists("reviews"):
