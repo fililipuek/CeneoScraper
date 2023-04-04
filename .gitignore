@@ -130,3 +130,6 @@ dmypy.json
 
 # Review files
 reviews
+
+# VSCode local settings
+.vscode
