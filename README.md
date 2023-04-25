@@ -18,3 +18,12 @@
 |how many users thought the review was unhelpful|`dislikes`|`int`|`button.vote-no["data-total-vote"]`, `button.vote-no > span`, `span[id^=votes-no]`|
 |publishing date|`published_date`|`string`|`span.user-post__published > time:nth-child(1) ["datetime"]`|
 |purchase date|`purchased_date`|`string`|`span.user-post__published > time:nth-child(2) ["datetime"]`|
+
+## Python libraries used in the project
+
+- requests
+- BeautifulSoup
+- json
+- os
+- numpy
+- translate
