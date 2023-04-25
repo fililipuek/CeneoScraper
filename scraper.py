@@ -2,12 +2,31 @@ import requests
 import json
 import os
 from bs4 import BeautifulSoup
+import numpy as np
+from translate import Translator
 
 product_id = input("Enter the product ID: ")
+from_lang = "pl"
+to_lang = "en"
+translator = Translator(to_lang, from_lang)
 url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
 response = requests.get(url)
 first = True
 has_received = False
+
+selectors = {
+    "id": [None, "data-entry-id"],
+    "author": [".user-post__author-name"],
+    "text": [".user-post__text"],
+    "score": [".user-post__score-count"],
+    "likes": ["span[id^=votes-yes]"],
+    "dislikes": ["span[id^=votes-no]"],
+    "published_date": [".user-post__published > time:nth-child(1)", "datetime"],
+    "purchased_date": [".user-post__published > time:nth-child(2)", "datetime"],
+    "pros": [".review-feature__col:has(> .review-feature__title--positives) > .review-feature__item", None, True],
+    "cons": [".review-feature__col:has(> .review-feature__title--negatives) > .review-feature__item", None, True],
+    "recommendation": [".user-post__author-recomendation > em"]
+}
 
 if response.status_code != requests.codes.ok:
     print("The product does not exist")
@@ -16,8 +35,15 @@ if response.status_code != requests.codes.ok:
 all_reviews = []
 review_counter = 0
 
-def get_element(dom, selector = None, attribute = None):
+def text_cleanup(text):
+    return " ".join(text.replace(r"\s", " ").split())
+
+def get_element(dom, selector = None, attribute = None, return_list = False):
     try:
+        if return_list:
+            tag_list = dom.select(selector)
+            return ", ".join([tag.text.strip() for tag in tag_list])
+
         if attribute:
             if selector:
                 return dom.select_one(selector)[attribute].strip()
@@ -46,25 +72,18 @@ while url:
     has_received = True
 
     for r in reviews:
-        pros = r.select(".review-feature__col:has(> .review-feature__title--positives) > .review-feature__item")
-        pros = [p.text.strip() for p in pros]
+        review = {}
 
-        cons = r.select(".review-feature__col:has(> .review-feature__title--negatives) > .review-feature__item")
-        cons = [c.text.strip() for c in cons]
-
-        review = {
-            "id": r["data-entry-id"].strip(),
-            "author": get_element(r, ".user-post__author-name"),
-            "text": get_element(r, ".user-post__text"),
-            "score": get_element(r, ".user-post__score-count"),
-            "likes": get_element(r, "span[id^=votes-yes]"),
-            "dislikes": get_element(r, "span[id^=votes-no]"),
-            "published_date": get_element(r, ".user-post__published > time:nth-child(1)", "datetime"),
-            "purchased_date": get_element(r, ".user-post__published > time:nth-child(2)", "datetime"),
-            "pros": pros,
-            "cons": cons,
-            "recommendation": get_element(r, ".user-post__author-recomendation > em")
-        }
+        for key, value in selectors.items():
+            review[key] = get_element(r, *value)
+        review["recommendation"] = True if review["recommendation"] == "Polecam" else False if review["recommendation"] == "Nie polecam" else None
+        review["score"] = np.divide(*[float(score.replace(",", ".")) for score in review["score"].split("/")])
+        review["likes"] = int(review["likes"])
+        review["dislikes"] = int(review["dislikes"])
+        review["text"] = text_cleanup(review["text"])
+        review["text_en"] = translator.translate(review["text"][:min(500, len(review["text"]))])
+        review["pros_en"] = translator.translate(review["pros"][:min(500, len(review["pros"]))])
+        review["cons_en"] = translator.translate(review["cons"][:min(500, len(review["cons"]))])
 
         all_reviews.append(review)
 
