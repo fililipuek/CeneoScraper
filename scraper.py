@@ -7,6 +7,7 @@ product_id = input("Enter the product ID: ")
 url = f"https://www.ceneo.pl/{product_id}#tab=reviews"
 response = requests.get(url)
 first = True
+has_received = False
 
 if response.status_code != requests.codes.ok:
     print("The product does not exist")
@@ -36,8 +37,13 @@ while url:
     reviews = page_dom.select(".js_product-review")
 
     if len(reviews) == 0:
-        print("There are no reviews for this product")
-        exit(1)
+        if not has_received:
+            print("There are no reviews for this product")
+            exit(1)
+        else:
+            break
+
+    has_received = True
 
     for r in reviews:
         pros = r.select(".review-feature__col:has(> .review-feature__title--positives) > .review-feature__item")
