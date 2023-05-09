@@ -133,3 +133,9 @@ reviews
 
 # VSCode local settings
 .vscode
+
+# Temporary files
+tmp
+
+# Chart image files
+charts
