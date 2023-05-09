@@ -4,10 +4,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 ids = [x.split(".")[0] for x in os.listdir("reviews")]
-# print(*ids, sep = "\n")
+print(*ids, sep = "\n")
 
-# id = input("Enter the product ID: ")
-id = 138536499
+id = input("Enter the product ID: ")
 max_score = 5
 
 dataframe = pd.read_json(f"reviews/{id}.json")
