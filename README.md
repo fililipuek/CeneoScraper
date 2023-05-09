@@ -27,3 +27,4 @@
 - os
 - numpy
 - translate
+- matplotlib
